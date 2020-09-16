@@ -287,4 +287,36 @@ describe('The computeTextAlternative function', () => {
     const elem = document.getElementById('test')!;
     expect(computeTextAlternative(elem).name).toBe('foo bar baz');
   });
+
+  it('works for elements defined in a different realms', () => {
+    render(
+      html`
+        <button id="before">Before the iframe</button>
+        <iframe src="data:text/html,"></iframe>
+        <button id="after">After the iframe</button>
+      `,
+      container
+    );
+    const iframe = container.querySelector('iframe')!;
+    //await iframeLoadedPromise(iframe);
+    render(
+      html`<button id="inside">Inside the iframe</button>`,
+      iframe.contentWindow!.document.body
+    );
+
+    const before = document.getElementById('before')!;
+    expect(computeTextAlternative(before).name).toBe('Before the iframe');
+    const inside = iframe.contentWindow!.document.getElementById('inside')!;
+    expect(computeTextAlternative(inside).name).toBe('Inside the iframe');
+    const after = document.getElementById('after')!;
+    expect(computeTextAlternative(after).name).toBe('After the iframe');
+    expect(inside instanceof HTMLElement).toBe(true);
+    expect(after instanceof HTMLElement).toBe(true);
+  });
 });
+
+// async function iframeLoadedPromise(iframe: HTMLIFrameElement) {
+//   return new Promise(resolve => {
+//     iframe.addEventListener('load', resolve, {once: true});
+//   });
+// }
